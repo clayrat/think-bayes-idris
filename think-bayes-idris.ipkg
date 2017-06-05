@@ -1,0 +1,9 @@
+package think-bayes-idris
+
+modules = ThinkBayes
+
+sourcedir = src
+
+opts = "-p contrib" 
+
+pkgs = containers
