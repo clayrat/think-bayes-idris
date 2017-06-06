@@ -1,6 +1,6 @@
-package think-bayes-idris
+package thinkbayesidris
 
-modules = ThinkBayes
+modules = Main
 
 sourcedir = src
 
