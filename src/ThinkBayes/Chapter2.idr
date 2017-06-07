@@ -4,15 +4,15 @@ import Data.AVL.Dict
 
 import ThinkBayes.PMF
 import ThinkBayes.Suite
+import ThinkBayes.Util
 
 cookies : String
-cookies = let 
-  x = pmfFromList ["Bowl 1", "Bowl 2"]
-  y = mult "Bowl 1" 0.75 x
-  z = mult "Bowl 2" 0.5 y
-  n = normalize z
- in 
-  maybe "oops" show $ get "Bowl 1" n
+cookies = pmfFromList ["Bowl 1", "Bowl 2"]
+       |> mult "Bowl 1" 0.75
+       |> mult "Bowl 2" 0.5
+       |> normalize
+       |> get "Bowl 1"
+       |> maybe "oops" show
 
 [monty] Suite Char Char where
   likelihood dat hypo = 
@@ -24,11 +24,9 @@ cookies = let
           else 1.0
 
 montySuite : String
-montySuite = let 
-  p = pmfFromList $ unpack "ABC"
-  u = updateS @{monty} 'B' p
- in 
-  show @{pmf} u
+montySuite = pmfFromList (unpack "ABC")
+          |> updateS @{monty} 'B'
+          |> show @{pmf}
 
 [mandm] Suite Char (String, String) where
   likelihood dat hypo = let
@@ -57,12 +55,10 @@ montySuite = let
     hypotheses = fromList [('A', hypoA), ('B', hypoB)]
 
 mAndM : String
-mAndM = let 
-  p = pmfFromList $ unpack "AB"
-  u0 = updateS @{mandm} ("bag1", "yellow") p
-  u1 = updateS @{mandm} ("bag2", "green") u0
-  in 
-  show @{pmf} u1
+mAndM = pmfFromList (unpack "AB")
+     |> updateS @{mandm} ("bag1", "yellow")
+     |> updateS @{mandm} ("bag2", "green")
+     |> show @{pmf}
 
 cookieEx : String
 cookieEx = ?cookie
