@@ -60,8 +60,37 @@ mAndM = pmfFromList (unpack "AB")
      |> updateS @{mandm} ("bag2", "green")
      |> show @{pmf}
 
+-- TODO how to extend Suite so we can use `hypoState` in `likelihood` without redeclaring? 
+interface (Ord hypoType, Ord dataType) => StateSuite hypoType dataType where
+  hypoState : Dict hypoType (Dict dataType Double)
+  updFreq : Double -> Double
+  likelihood : dataType -> hypoType -> Double
+  updateS : dataType -> PMF hypoType -> PMF hypoType
+  updateS dat pmf = let 
+    ld = likelihood dat
+    updated = foldl 
+      (\p,hypo => PMF.mult hypo (ld hypo) p) 
+      pmf 
+      (domain pmf)
+   in 
+    normalize updated
+
+-- bugs out if put into the interface, see https://github.com/idris-lang/Idris-dev/issues/3858
+updState : StateSuite hypoType dataType => hypoType -> dataType -> Dict hypoType (Dict dataType Double)
+updState {hypoType} {dataType} h d = Dict.update h (Dict.update d (updFreq {hypoType} {dataType})) hypoState
+
+[cookie] StateSuite String String where 
+  hypoState = fromList [("Bowl1", fromList [("vanilla", 30.0), ("chocolate", 10.0)])
+                       ,("Bowl2", fromList [("vanilla", 20.0), ("chocolate", 20.0)])
+                       ]
+  updFreq x = x - 1.0
+  likelihood d h = fromMaybe (-1.0) $ do
+     bh <- Dict.lookup h hypoState
+     d <- Dict.lookup d bh 
+     pure $ d / (sum $ Dict.values bh)
+
 cookieEx : String
-cookieEx = ?cookie
+cookieEx = ?cookieEx
 
 main : IO ()
 main = printLn mAndM
