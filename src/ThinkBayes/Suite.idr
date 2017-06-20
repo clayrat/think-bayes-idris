@@ -7,8 +7,8 @@ import ThinkBayes.PMF
 public export
 interface Ord hypoType => Suite hypoType dataType where
   likelihood : dataType -> hypoType -> Double
-  updateS : dataType -> PMF hypoType -> PMF hypoType
-  updateS dat pmf = let 
+  updatePMF : dataType -> PMF hypoType -> PMF hypoType
+  updatePMF dat pmf = let 
     ld = likelihood dat
     updated = foldl 
       (\p,hypo => PMF.mult hypo (ld hypo) p) 

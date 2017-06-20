@@ -14,18 +14,18 @@ import ThinkBayes.Util
 
 dice : String
 dice = pmfFromList [4,6,8,12,20]
-    |> updateS @{prop} 6
-    |> updateS @{prop} 6 
-    |> updateS @{prop} 8 
-    |> updateS @{prop} 7 
-    |> updateS @{prop} 7 
-    |> updateS @{prop} 5 
-    |> updateS @{prop} 4 
+    |> updatePMF @{prop} 6
+    |> updatePMF @{prop} 6 
+    |> updatePMF @{prop} 8 
+    |> updatePMF @{prop} 7 
+    |> updatePMF @{prop} 7 
+    |> updatePMF @{prop} 5 
+    |> updatePMF @{prop} 4 
     |> show @{pmf}
 
 trainsUni : String
 trainsUni = pmfFromList [1..1000]
-         |> updateS @{prop} 60
+         |> updatePMF @{prop} 60
          |> mean
          |> show 
 

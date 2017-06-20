@@ -1,5 +1,7 @@
 module Main
 
+import Control.Monad.State
+
 import Data.AVL.Dict
 
 import ThinkBayes.PMF
@@ -25,7 +27,7 @@ cookies = pmfFromList ["Bowl 1", "Bowl 2"]
 
 montySuite : String
 montySuite = pmfFromList (unpack "ABC")
-          |> updateS @{monty} 'B'
+          |> updatePMF @{monty} 'B'
           |> show @{pmf}
 
 [mandm] Suite Char (String, String) where
@@ -56,41 +58,56 @@ montySuite = pmfFromList (unpack "ABC")
 
 mAndM : String
 mAndM = pmfFromList (unpack "AB")
-     |> updateS @{mandm} ("bag1", "yellow")
-     |> updateS @{mandm} ("bag2", "green")
+     |> updatePMF @{mandm} ("bag1", "yellow")
+     |> updatePMF @{mandm} ("bag2", "green")
      |> show @{pmf}
 
--- TODO how to extend Suite so we can use `hypoState` in `likelihood` without redeclaring? 
+public export
+HypoState : Type -> Type -> Type -> Type
+HypoState hypoType dataType = State (Dict hypoType (Dict dataType Double))
+
+public export
 interface (Ord hypoType, Ord dataType) => StateSuite hypoType dataType where
-  hypoState : Dict hypoType (Dict dataType Double)
+  likelihoodS : dataType -> hypoType -> HypoState hypoType dataType Double
   updFreq : Double -> Double
-  likelihood : dataType -> hypoType -> Double
-  updateS : dataType -> PMF hypoType -> PMF hypoType
-  updateS dat pmf = let 
-    ld = likelihood dat
-    updated = foldl 
-      (\p,hypo => PMF.mult hypo (ld hypo) p) 
+  updatePMFS : dataType -> PMF hypoType -> HypoState hypoType dataType (PMF hypoType)
+  updatePMFS dat pmf = let 
+    ld = likelihoodS dat
+    updated = foldM 
+      (\p,hypo => (\lh => PMF.mult hypo lh p) <$> ld hypo) 
       pmf 
       (domain pmf)
    in 
-    normalize updated
+    normalize <$> updated    
 
 -- bugs out if put into the interface, see https://github.com/idris-lang/Idris-dev/issues/3858
-updState : StateSuite hypoType dataType => hypoType -> dataType -> Dict hypoType (Dict dataType Double)
-updState {hypoType} {dataType} h d = Dict.update h (Dict.update d (updFreq {hypoType} {dataType})) hypoState
+updState : StateSuite hypoType dataType => hypoType -> dataType -> HypoState hypoType dataType ()
+updState {hypoType} {dataType} h d = modify (Dict.update h (Dict.update d (updFreq {hypoType} {dataType})))
 
-[cookie] StateSuite String String where 
-  hypoState = fromList [("Bowl1", fromList [("vanilla", 30.0), ("chocolate", 10.0)])
-                       ,("Bowl2", fromList [("vanilla", 20.0), ("chocolate", 20.0)])
-                       ]
+StateSuite String String where
+  likelihoodS d h = do
+    hs <- get 
+    let bh = fromMaybe (fromList []) $ Dict.lookup h hs
+    let dat = fromMaybe (-1.0) $ Dict.lookup d bh
+    pure $ dat / (sum $ Dict.values bh)
   updFreq x = x - 1.0
-  likelihood d h = fromMaybe (-1.0) $ do
-     bh <- Dict.lookup h hypoState
-     d <- Dict.lookup d bh 
-     pure $ d / (sum $ Dict.values bh)
 
 cookieEx : String
-cookieEx = ?cookieEx
+cookieEx = evalState (do
+    hs <- get 
+    let strhs = show hs
+    let pmf1 = pmfFromList ["Bowl1", "Bowl2"]
+    pmf2 <- updatePMFS "vanilla" pmf1
+    let str2 = show @{pmf} pmf2
+    updState "Bowl1" "vanilla"
+    hs2 <- get 
+    let strhs2 = show hs2
+    pmf3 <- updatePMFS "vanilla" pmf1
+    let str3 = show @{pmf} pmf3
+    pure (strhs ++ "\n" ++ str2 ++ "\n\n" ++ strhs2 ++ "\n" ++ str3)
+    ) (fromList [("Bowl1", fromList [("vanilla", 30.0), ("chocolate", 10.0)])
+                ,("Bowl2", fromList [("vanilla", 20.0), ("chocolate", 20.0)])
+                ])
 
 main : IO ()
-main = printLn mAndM
+main = putStrLn cookieEx
