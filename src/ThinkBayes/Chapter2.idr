@@ -93,21 +93,20 @@ StateSuite String String where
   updFreq x = x - 1.0
 
 cookieEx : String
-cookieEx = evalState (do
-    hs <- get 
-    let strhs = show hs
-    let pmf1 = pmfFromList ["Bowl1", "Bowl2"]
-    pmf2 <- updatePMFS "vanilla" pmf1
-    let str2 = show @{pmf} pmf2
-    updState "Bowl1" "vanilla"
-    hs2 <- get 
-    let strhs2 = show hs2
-    pmf3 <- updatePMFS "vanilla" pmf1
-    let str3 = show @{pmf} pmf3
-    pure (strhs ++ "\n" ++ str2 ++ "\n\n" ++ strhs2 ++ "\n" ++ str3)
-    ) (fromList [("Bowl1", fromList [("vanilla", 30.0), ("chocolate", 10.0)])
-                ,("Bowl2", fromList [("vanilla", 20.0), ("chocolate", 20.0)])
-                ])
-
+cookieEx = evalState doCookies $ 
+  fromList [("Bowl1", fromList [("vanilla", 30.0), ("chocolate", 10.0)])
+           ,("Bowl2", fromList [("vanilla", 20.0), ("chocolate", 20.0)])
+           ]
+  where 
+    doCookies : HypoState String String String
+    doCookies = do
+      hs <- get 
+      let pmf1 = pmfFromList ["Bowl1", "Bowl2"]
+      pmf2 <- updatePMFS "vanilla" pmf1
+      updState "Bowl1" "vanilla"
+      hs2 <- get 
+      pmf3 <- updatePMFS "vanilla" pmf1
+      pure $ show hs ++ "\n" ++ show @{pmf} pmf2 ++ "\n\n" ++  show hs2 ++ "\n" ++ show @{pmf} pmf3
+    
 main : IO ()
 main = putStrLn cookieEx
