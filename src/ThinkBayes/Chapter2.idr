@@ -84,6 +84,7 @@ interface (Ord hypoType, Ord dataType) => StateSuite hypoType dataType where
 updState : StateSuite hypoType dataType => hypoType -> dataType -> HypoState hypoType dataType ()
 updState {hypoType} {dataType} h d = modify (Dict.update h (Dict.update d (updFreq {hypoType} {dataType})))
 
+-- bugs out if given a name, maybe some interference from State?
 StateSuite String String where
   likelihoodS d h = do
     hs <- get 
