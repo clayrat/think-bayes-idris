@@ -9,7 +9,7 @@ import ThinkBayes.Suite
 import ThinkBayes.Util
 
 cookies : String
-cookies = pmfFromList ["Bowl 1", "Bowl 2"]
+cookies = uniform ["Bowl 1", "Bowl 2"]
        |> mult "Bowl 1" 0.75
        |> mult "Bowl 2" 0.5
        |> normalize
@@ -26,7 +26,7 @@ cookies = pmfFromList ["Bowl 1", "Bowl 2"]
           else 1.0
 
 montySuite : String
-montySuite = pmfFromList (unpack "ABC")
+montySuite = uniform (unpack "ABC")
           |> updatePMF @{monty} 'B'
           |> show @{pmf}
 
@@ -57,7 +57,7 @@ montySuite = pmfFromList (unpack "ABC")
     hypotheses = fromList [('A', hypoA), ('B', hypoB)]
 
 mAndM : String
-mAndM = pmfFromList (unpack "AB")
+mAndM = uniform (unpack "AB")
      |> updatePMF @{mandm} ("bag1", "yellow")
      |> updatePMF @{mandm} ("bag2", "green")
      |> show @{pmf}
@@ -73,7 +73,7 @@ interface (Ord hypoType, Ord dataType) => StateSuite hypoType dataType where
   updatePMFS : dataType -> PMF hypoType -> HypoState hypoType dataType (PMF hypoType)
   updatePMFS dat pmf = let 
     ld = likelihoodS dat
-    updated = foldM 
+    updated = foldlM 
       (\p,hypo => (\lh => PMF.mult hypo lh p) <$> ld hypo) 
       pmf 
       (domain pmf)
@@ -102,7 +102,7 @@ cookieEx = evalState doCookies $
     doCookies : HypoState String String String
     doCookies = do
       hs <- get 
-      let pmf1 = pmfFromList ["Bowl1", "Bowl2"]
+      let pmf1 = uniform ["Bowl1", "Bowl2"]
       pmf2 <- updatePMFS "vanilla" pmf1
       updState "Bowl1" "vanilla"
       hs2 <- get 

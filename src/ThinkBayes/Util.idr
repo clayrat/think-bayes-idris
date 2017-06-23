@@ -7,7 +7,12 @@ infixl 9 |>
 (|>) : a -> (a -> b) -> b
 a |> f = f a
 
--- TODO contribute to prelude
+-- https://github.com/idris-lang/Idris-dev/pull/3877
+||| Similar to 'foldl', but uses a function wrapping its result in a 'Monad'.
+||| Consequently, the final value is wrapped in the same 'Monad'.
+foldlM : (Foldable t, Monad m) => (funcM: a -> b -> m a) -> (init: a) -> (input: t b) -> m a
+foldlM fm a0 = foldl (\ma,b => ma >>= flip fm b) (pure a0)
 
-foldM : (Foldable f, Monad m) => (a -> b -> m a) -> a -> f b -> m a
-foldM f a0 = foldl (\ma, b => ma >>= flip f b) (pure a0)
+-- okay.jpg
+pow : Double -> Double -> Double
+pow x y = exp (y * log x) 

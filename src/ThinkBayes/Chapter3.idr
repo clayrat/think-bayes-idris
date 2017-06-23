@@ -13,7 +13,7 @@ import ThinkBayes.Util
         else 1.0/(cast hypo)
 
 dice : String
-dice = pmfFromList [4,6,8,12,20]
+dice = uniform [4,6,8,12,20]
     |> updatePMF @{prop} 6
     |> updatePMF @{prop} 6 
     |> updatePMF @{prop} 8 
@@ -24,10 +24,21 @@ dice = pmfFromList [4,6,8,12,20]
     |> show @{pmf}
 
 trainsUni : String
-trainsUni = pmfFromList [1..1000]
+trainsUni = uniform [1..1000]
          |> updatePMF @{prop} 60
          |> mean
          |> show 
 
+trainsPow : String
+trainsPow = show $ f <$> [500, 1000, 2000]
+  where 
+    f : Int -> String
+    f x = PMF.power [1..x] 1.0
+       |> updatePMF @{prop} 30
+       |> updatePMF @{prop} 60
+       |> updatePMF @{prop} 90       
+       |> mean
+       |> show
+
 main : IO ()
-main = printLn trainsUni
+main = printLn trainsPow
