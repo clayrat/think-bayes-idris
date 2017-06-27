@@ -40,5 +40,13 @@ trainsPow = show $ f <$> [500, 1000, 2000]
        |> mean
        |> show
 
+trainsInterval : String
+trainsInterval = PMF.power [1..2000] 1.0
+       |> updatePMF @{prop} 30
+       |> updatePMF @{prop} 60
+       |> updatePMF @{prop} 90       
+       |> (\p => (percentile p 5, percentile p 95))
+       |> show
+
 main : IO ()
-main = printLn trainsPow
+main = printLn trainsInterval

@@ -30,6 +30,19 @@ mean pmf = foldl
              0.0 
              (toList pmf)
 
+percentile : PMF a -> Int -> Maybe a
+percentile pmf pcnt = let 
+    p = (cast pcnt) / 100.0
+  in
+    case toList pmf of
+      hd :: tl => Just $ fst $ foldl 
+        (\(h, tot),(hypo,prob) => 
+          if tot >= p then (h, tot) 
+                      else (hypo, tot + prob)
+        ) 
+        hd tl
+      [] => Nothing
+
 normalize : (Ord a) => PMF a -> PMF a
 normalize a = let 
     factor = 1.0 / tot a
