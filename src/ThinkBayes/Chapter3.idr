@@ -13,15 +13,12 @@ import ThinkBayes.Util
         else 1.0/(cast hypo)
 
 dice : String
-dice = uniform [4,6,8,12,20]
-    |> updatePMF @{prop} 6
-    |> updatePMF @{prop} 6 
-    |> updatePMF @{prop} 8 
-    |> updatePMF @{prop} 7 
-    |> updatePMF @{prop} 7 
-    |> updatePMF @{prop} 5 
-    |> updatePMF @{prop} 4 
-    |> show @{pmf}
+dice = let
+    dicePMF = uniform [4,6,8,12,20]
+    obs = [6,6,8,7,7,5,4]
+  in
+    foldl (flip $ updatePMF @{prop}) dicePMF obs 
+ |> show @{pmf} 
 
 trainsUni : String
 trainsUni = uniform [1..1000]
@@ -30,23 +27,25 @@ trainsUni = uniform [1..1000]
          |> show 
 
 trainsPow : String
-trainsPow = show $ f <$> [500, 1000, 2000]
+trainsPow = show $ go <$> [500, 1000, 2000]
   where 
-    f : Int -> String
-    f x = PMF.power [1..x] 1.0
-       |> updatePMF @{prop} 30
-       |> updatePMF @{prop} 60
-       |> updatePMF @{prop} 90       
-       |> mean
-       |> show
+    go : Int -> String
+    go x = let
+        trainPMF = PMF.power [1..x] 1.0
+        obs = [30,60,90]
+      in
+        foldl (flip $ updatePMF @{prop}) trainPMF obs 
+     |> mean
+     |> show
 
 trainsInterval : String
-trainsInterval = PMF.power [1..2000] 1.0
-       |> updatePMF @{prop} 30
-       |> updatePMF @{prop} 60
-       |> updatePMF @{prop} 90       
-       |> (\p => (percentile p 5, percentile p 95))
-       |> show
+trainsInterval = let
+    trainPMF = PMF.power [1..2000] 1.0
+    obs = [30,60,90]
+  in
+    foldl (flip $ updatePMF @{prop}) trainPMF obs     
+ |> (\p => (percentile p 5, percentile p 95))
+ |> show
 
 main : IO ()
 main = printLn trainsInterval
