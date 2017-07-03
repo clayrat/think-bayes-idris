@@ -1,8 +1,10 @@
 module Main
 
 import Data.AVL.Dict
+import Data.SortedMap    -- bug? if removed throws `No such variable Data.SortedMap.SortedMap` @ trainsIntervalCDF
 
 import ThinkBayes.PMF
+import ThinkBayes.CDF
 import ThinkBayes.Suite
 import ThinkBayes.Util
 
@@ -26,26 +28,31 @@ trainsUni = uniform [1..1000]
          |> mean
          |> show 
 
-trainsPow : String
-trainsPow = show $ go <$> [500, 1000, 2000]
-  where 
-    go : Int -> String
-    go x = let
-        trainPMF = PMF.power [1..x] 1.0
-        obs = [30,60,90]
-      in
-        foldl (flip $ updatePMF @{prop}) trainPMF obs 
-     |> mean
-     |> show
-
-trainsInterval : String
-trainsInterval = let
-    trainPMF = PMF.power [1..2000] 1.0
+threeTrains : Int -> PMF Int         
+threeTrains x = let
+    trainPMF = PMF.power [1..x] 1.0
     obs = [30,60,90]
   in
-    foldl (flip $ updatePMF @{prop}) trainPMF obs     
+    foldl (flip $ updatePMF @{prop}) trainPMF obs 
+
+trainsPow : String
+trainsPow = show $ (show . mean . threeTrains) <$> [500, 1000, 2000]
+
+trainsInterval : String
+trainsInterval = 
+    threeTrains 2000     
  |> (\p => (percentile p 5, percentile p 95))
  |> show
 
+trainsIntervalCDF : String
+trainsIntervalCDF = 
+    threeTrains 2000  
+ |> fromPMF 
+ |> (\c => (percentile c 5, percentile c 95))
+ |> show
+
 main : IO ()
-main = printLn trainsInterval
+main = do
+  printLn trainsPow
+  printLn trainsInterval
+  printLn trainsIntervalCDF
