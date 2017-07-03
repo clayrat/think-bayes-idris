@@ -51,8 +51,24 @@ trainsIntervalCDF =
  |> (\c => (percentile c 5, percentile c 95))
  |> show
 
+-- https://stats.stackexchange.com/questions/70096/locomotive-problem-with-various-size-companies
+-- not dependent on hypothesis
+[manyComp] Suite Int Int where
+  likelihood dat _ = let 
+    ns = [10, 100, 1000, 10000]
+    tot = sum ns
+    withNum = ns |> filter (>=dat) |> length
+  in
+    cast withNum / cast tot
+
+threeMany : String     
+threeMany = let
+    trainPMF = PMF.power [1..2000] 1.0
+    obs = [30,60,90]
+  in
+    foldl (flip $ updatePMF @{manyComp}) trainPMF obs  
+ |> mean
+ |> show 
+    
 main : IO ()
-main = do
-  printLn trainsPow
-  printLn trainsInterval
-  printLn trainsIntervalCDF
+main = printLn threeMany
